@@ -4,3 +4,40 @@ author: "Zihan Yu"
 output: github_document
 ---
 
+## Problem 2
+
+Start with a dataframe containing all file names
+```{r,echo=FALSE}
+setwd("~/Documents/P8105_Data Science 1")
+fileNames <- list.files(path="~/Documents/P8105_Data Science 1/p8105_hw5_zy2443/data",full.names = TRUE,recursive = TRUE)
+data.frame(fileNames, stringsAsFactors = F)
+```
+
+Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+```{r}
+library(purrr)
+fileDataframe<-unlist(fileNames)%>%map(read.csv)
+library(data.table)
+fileDataframeT<-rbindlist(fileDataframe)
+fileNames<-cbind(fileNames,fileDataframeT)
+```
+
+Tidy the result; manipulate file names to include control arm and subject ID
+```{r}
+dataCon<-fileDataframeT[grep("con",fileNames[[1]]),]
+```
+
+According to the output of the following figure, we find that the experiment group were with higher value than that of control group.
+```{r}
+library(ggplot2)
+armGroup<-rep(0,20)
+armGroup[grep("con",fileNames[1])]<-"1";
+armGroup[-grep("con",fileNames[1])]<-"2";
+armGroup<-rep(as.factor(armGroup),each=8);
+subjectIDs<-rep(as.factor(rep(1:10,2)),each=8)
+weekPlot<-rep(1:8,20);
+valuesPlot<-unname(unlist(fileDataframeT))
+dataPlot<-as.data.frame(cbind(armGroup=armGroup,subjectIDs=subjectIDs,weekPlot=weekPlot,valuesPlot=valuesPlot))
+ggplot(dataPlot, aes(weekPlot, valuesPlot, group = armGroup))+geom_point() +  geom_line(aes(colour = armGroup))
+```
+
